@@ -1,16 +1,16 @@
 import os
 import glob
-from langchain_community.document_loaders import ObsidianLoader
+from langchain_community.document_loaders import TextLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_community.vectorstores import Chroma
 from langchain_community.embeddings import OllamaEmbeddings
+from langchain_community.vectorstores import Chroma
 from langchain_ollama import ChatOllama
 from langchain_core.messages import HumanMessage, SystemMessage
 
 # ── CONFIG ──────────────────────────────────────────────────────
-VAULT_PATH   = r"C:\Users\yeapj\OneDrive\Documents\Obsidian\claude-repo" # ← change this
+VAULT_PATH   = r"C:\Users\yeapj\OneDrive\Documents\Obsidian\claude-repo"  # ← change this
 OLLAMA_MODEL = "llama3"
-TOP_N_FILES  = 5   # how many files to load per question
+TOP_N_FILES  = 5
 
 splitter   = RecursiveCharacterTextSplitter(
     chunk_size=500,
@@ -20,90 +20,118 @@ splitter   = RecursiveCharacterTextSplitter(
 embeddings = OllamaEmbeddings(model=OLLAMA_MODEL)
 llm        = ChatOllama(model=OLLAMA_MODEL)
 
-# ── STEP 1: Index just filenames (no file content loaded) ────────
+# ── STEP 1: Scan vault filenames only (zero RAM cost) ────────────
 def get_all_note_paths(vault_path):
     return glob.glob(os.path.join(vault_path, "**", "*.md"), recursive=True)
 
-def find_relevant_files(question: str, all_paths: list, top_n: int = TOP_N_FILES):
-    """
-    Cheap keyword match against filenames and folder names only.
-    No file content is read here — just paths.
-    """
+# ── STEP 2: Keyword match filenames to find relevant notes ───────
+def find_relevant_files(question, all_paths, top_n=TOP_N_FILES):
     keywords = [w.lower() for w in question.split() if len(w) > 3]
     scored = []
     for path in all_paths:
-        name = os.path.basename(path).lower().replace(".md", "")
+        name   = os.path.basename(path).lower().replace(".md", "")
         folder = os.path.dirname(path).lower()
-        score = sum(1 for kw in keywords if kw in name or kw in folder)
+        score  = sum(1 for kw in keywords if kw in name or kw in folder)
         scored.append((score, path))
 
-    # Sort by score, take top N, fall back to most recently modified if no keyword match
     scored.sort(key=lambda x: x[0], reverse=True)
     top = [p for s, p in scored if s > 0][:top_n]
 
     if not top:
-        # fallback: pick most recently modified notes
+        # fallback: most recently modified notes
         top = sorted(all_paths, key=os.path.getmtime, reverse=True)[:top_n]
-        print(f"   No keyword match — using {top_n} most recent notes as fallback")
+        print(f"   No filename match — using {top_n} most recent notes")
 
     return top
 
-# ── STEP 2: Load + embed only the selected files ─────────────────
-def load_and_retrieve(file_paths: list, question: str):
-    from langchain_community.document_loaders import TextLoader
+# ── STEP 3: Read files → chunk → embed → retrieve ───────────────
+def read_and_retrieve(file_paths, question):
+    all_docs = []
 
-    docs = []
     for path in file_paths:
         try:
+            # Actually reads the file content here
             loader = TextLoader(path, encoding="utf-8")
-            docs.extend(loader.load())
+            docs   = loader.load()
+            all_docs.extend(docs)
+            print(f"    Read: {os.path.basename(path)} ({len(docs[0].page_content)} chars)")
         except Exception as e:
-            print(f"   ⚠️ Could not load {path}: {e}")
+            print(f"     Skipped {os.path.basename(path)}: {e}")
 
-    if not docs:
+    if not all_docs:
         return []
 
-    chunks = splitter.split_documents(docs)
+    # Split content into chunks
+    chunks = splitter.split_documents(all_docs)
+    print(f"    {len(chunks)} chunks ready for retrieval")
 
-    # Temporary in-memory vector store — no disk write, freed after each question
+    # Embed chunks into a temporary in-memory store
     temp_store = Chroma.from_documents(
         chunks,
         embeddings,
-        collection_name="temp_query"   # overwritten each time
+        collection_name="temp_session"
     )
+
+    # Retrieve the most relevant chunks for the question
     retriever = temp_store.as_retriever(search_kwargs={"k": 4})
-    return retriever.invoke(question)
+    results   = retriever.invoke(question)
 
-# ── STEP 3: Ask function ─────────────────────────────────────────
-def ask(question: str, all_paths: list):
-    print(f"\n🔍 Scanning {len(all_paths)} filenames...")
-    relevant_files = find_relevant_files(question, all_paths)
+    # Clean up temp store from memory
+    temp_store.delete_collection()
 
-    print(f"   Loading {len(relevant_files)} matched notes:")
-    for f in relevant_files:
+    return results
+
+# ── STEP 4: Build context and generate answer ────────────────────
+def ask(question, all_paths):
+    print(f"\n Scanning {len(all_paths)} filenames for: '{question}'")
+    matched = find_relevant_files(question, all_paths)
+
+    print(f"\n Loading {len(matched)} matched note(s):")
+    for f in matched:
         print(f"   - {os.path.basename(f)}")
 
-    results = load_and_retrieve(relevant_files, question)
+    # Read files and retrieve relevant chunks
+    results = read_and_retrieve(matched, question)
 
     if not results:
-        print("⚠️  Nothing useful found in matched notes.\n")
+        print("\n  Could not extract useful content from matched notes.\n")
         return
 
-    sources = list(set([os.path.basename(doc.metadata.get("source", "")) for doc in results]))
+    # Build context string from retrieved chunks
     context = "\n\n---\n\n".join([doc.page_content for doc in results])
 
-    messages = [
-        SystemMessage(content="Answer using only the user's Obsidian notes below. If unsure, say so."),
-        HumanMessage(content=f"Context:\n{context}\n\nQuestion: {question}")
-    ]
-    answer = llm.invoke(messages)
-    print(f"\n📓 Sources: {', '.join(sources)}")
-    print(f"\n{answer.content}\n")
+    # Show which notes the answer is drawn from
+    sources = list(set([
+        os.path.basename(doc.metadata.get("source", "unknown"))
+        for doc in results
+    ]))
 
-# ── STEP 4: Chat loop ─────────────────────────────────────────────
+    print(f"\n Generating answer from: {', '.join(sources)}\n")
+
+    # Send to LLM
+    messages = [
+        SystemMessage(content=(
+            "You are a helpful assistant. Answer the question using ONLY "
+            "the Obsidian notes provided below as context. "
+            "Quote the relevant note name when possible. "
+            "If the notes don't contain enough info, say so clearly."
+        )),
+        HumanMessage(content=(
+            f"My notes:\n\n{context}\n\n"
+            f"Question: {question}"
+        ))
+    ]
+
+    answer = llm.invoke(messages)
+
+    print(f"📓 Sources used: {', '.join(sources)}")
+    print(f"\n Answer:\n{answer.content}\n")
+    print("─" * 60)
+
+# ── STEP 5: Chat loop ────────────────────────────────────────────
 all_paths = get_all_note_paths(VAULT_PATH)
-print(f"📂 Found {len(all_paths)} notes in vault (filenames only, not loaded yet)")
-print("💬 Type your question. Type 'exit' to quit.\n")
+print(f" Vault indexed: {len(all_paths)} notes found (filenames only)")
+print(" Ask anything about your notes. Type 'exit' to quit.\n")
 
 while True:
     q = input("You: ").strip()
