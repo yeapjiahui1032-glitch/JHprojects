@@ -3,7 +3,7 @@ import base64
 import requests
 import streamlit as st
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_community.vectorstores import Chroma
+from langchain_community.vectorstores import FAISS
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain.schema import Document
@@ -87,7 +87,7 @@ def retrieve_chunks(matched_notes, question, embeddings, splitter):
         for n in matched_notes
     ]
     chunks  = splitter.split_documents(docs)
-    store   = Chroma.from_documents(chunks, embeddings, collection_name="temp_vault")
+    store   = FAISS.from_documents(chunks, embeddings, collection_name="temp_vault")
     results = store.as_retriever(search_kwargs={"k": 4}).invoke(question)
     store.delete_collection()
     return results
