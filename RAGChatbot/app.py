@@ -2,25 +2,73 @@ import streamlit as st
 import os
 import tempfile
 from pathlib import Path
-from langchain.document_loaders import TextLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_community.vectorstores import Chroma
-from langchain_openai import OpenAIEmbeddings, ChatOpenAI
-from langchain_core.messages import HumanMessage, SystemMessage
+
+# LangChain imports with fallbacks
+try:
+    from langchain_community.document_loaders import TextLoader
+except ImportError:
+    try:
+        from langchain_document_loaders import TextLoader
+    except ImportError:
+        st.error("Could not import TextLoader. Please check your LangChain installation.")
+        st.stop()
+
+try:
+    from langchain_text_splitters import RecursiveCharacterTextSplitter
+except ImportError:
+    st.error("Could not import RecursiveCharacterTextSplitter. Please install langchain-text-splitters.")
+    st.stop()
+
+try:
+    from langchain_community.vectorstores import Chroma
+except ImportError:
+    st.error("Could not import Chroma. Please install langchain-community.")
+    st.stop()
+
+try:
+    from langchain_openai import OpenAIEmbeddings, ChatOpenAI
+except ImportError:
+    st.error("Could not import OpenAI components. Please install langchain-openai.")
+    st.stop()
+
+try:
+    from langchain_core.messages import HumanMessage, SystemMessage
+except ImportError:
+    st.error("Could not import LangChain core messages. Please install langchain-core.")
+    st.stop()
 
 # Page config
 st.set_page_config(page_title="RAG Chatbot", page_icon="📚", layout="wide")
+
+# Check for OpenAI API key from secrets or user input
+try:
+    openai_api_key = st.secrets["OPENAI_API_KEY"]
+    api_key_configured = True
+except KeyError:
+    api_key_configured = False
+    openai_api_key = None
 
 # Title
 st.title("📚 RAG Chatbot with Document Q&A")
 st.markdown("Upload your documents and ask questions about them!")
 
+# API Key status
+if api_key_configured:
+    st.success("✅ OpenAI API key configured via secrets")
+else:
+    st.warning("⚠️ OpenAI API key not found in secrets. Please enter it below.")
+
 # Sidebar for configuration
 with st.sidebar:
     st.header("⚙️ Configuration")
 
-    # API Key input
-    openai_api_key = st.text_input("OpenAI API Key", type="password", help="Required for embeddings and chat")
+    # API Key input (only show if not configured via secrets)
+    if not api_key_configured:
+        openai_api_key = st.text_input("OpenAI API Key", type="password", help="Required for embeddings and chat")
+        if openai_api_key:
+            st.success("✅ API key entered")
+        else:
+            st.error("❌ Please enter your OpenAI API key")
 
     # Model selection
     embedding_model = st.selectbox("Embedding Model", ["text-embedding-3-small", "text-embedding-3-large"], index=0)
@@ -104,9 +152,12 @@ for message in st.session_state.chat_history:
 # Chat input
 if prompt := st.chat_input("Ask a question about your documents..."):
     if not st.session_state.vectorstore:
-        st.error("Please upload documents and configure your API key first!")
+        st.error("Please upload documents first!")
     elif not openai_api_key:
-        st.error("Please enter your OpenAI API key in the sidebar!")
+        if api_key_configured:
+            st.error("API key configuration error. Please check your secrets.")
+        else:
+            st.error("Please enter your OpenAI API key in the sidebar!")
     else:
         # Add user message to history
         st.session_state.chat_history.append({"role": "user", "content": prompt})
