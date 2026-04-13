@@ -58,10 +58,10 @@ with col1:
         reduce_submitted = st.form_submit_button("Reduce Quantity")
         if reduce_submitted:
          result = reduce_product_quantity(reduce_id, reduce_quantity)
-         if result:
-            st.success("Quantity reduced successfully!")
+        if result:
+                st.success("Quantity reduced successfully!")
          else:
-            st.error("Failed! Check the SKU or quantity entered.")
+                st.error("Failed! Check the SKU or quantity entered.")
 with col2:
     with st.form("increase_quantity_form"):
         increase_id = st.text_input("Product SKU to Increase")
@@ -70,10 +70,10 @@ with col2:
 
         if increase_submitted:
          result = increase_product_quantity(increase_id, increase_quantity)
-         if result:
-            st.success("Quantity increased successfully!")
+        if result:
+                st.success("Quantity increased successfully!")
         else:
-            st.error("Failed! Check the SKU or quantity entered.")
+                 st.error("Failed! Check the SKU or quantity entered.")
 
 
 st.subheader("Delete Product")
