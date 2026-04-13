@@ -4,11 +4,11 @@ class Product:
     def __init__(
         self,
         name,
-        sku=None,
         quantity,
         min_stock,
         category="",
         location="",
+        sku=None,
         created_at=None,
         updated_at=None,
         id=None,
