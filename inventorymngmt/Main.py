@@ -19,7 +19,7 @@ with st.form("add_product_form"):
     quantity = st.number_input("Quantity",min_value=0, step=1)
     min_stock = st.number_input("Minimum Stock",min_value=0, step=1)
     category = st.selectbox("Category", ["Wood", "Metal", "Plastic"])
-    location = st.text_input("Location")
+    location = st.selectbox("Location",["Malaysia","Singapore"])
     submitted = st.form_submit_button("Add Product")
 
     if submitted:
