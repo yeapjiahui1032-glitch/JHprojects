@@ -1,3 +1,4 @@
+import os
 import sqlite3
 from Model import Product
 import streamlit as st
@@ -9,10 +10,10 @@ def generate_sku(length=8):
     """Generate a random SKU consisting of uppercase letters and digits."""
     characters = string.ascii_uppercase + string.digits
     return ''.join(random.choice(characters) for _ in range(length))
-
+DB_PATH = os.path.join(os.path.dirname(__file__), 'products.db')    
 @st.cache_resource
 def get_db_connection():
-    conn = sqlite3.connect('products.db', check_same_thread=False)
+    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
     return conn
 
 def get_cursor():
