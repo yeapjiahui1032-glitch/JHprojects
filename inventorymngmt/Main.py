@@ -69,8 +69,8 @@ with col2:
         increase_submitted = st.form_submit_button("Increase Quantity")
 
         if increase_submitted:
-         result = increase_product_quantity(increase_id, increase_quantity)
-        if result:
+            result = increase_product_quantity(increase_id, increase_quantity)
+            if result:
                 st.success("Quantity increased successfully!")
         else:
                  st.error("Failed! Check the SKU or quantity entered.")
