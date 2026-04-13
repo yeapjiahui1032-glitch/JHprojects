@@ -100,8 +100,8 @@ def reduce_product_quantity(sku: str, quantity: int):
         else:
             with conn:
                 cur.execute(
-                    "UPDATE products SET quantity=:quantity WHERE id=:id",
-                    {'id': id, 'quantity': new_product_quantity}
+                    "UPDATE products SET quantity=:quantity WHERE sku=:sku",
+                    {'sku': sku, 'quantity': new_product_quantity}
                 )
                 conn.commit()
 
