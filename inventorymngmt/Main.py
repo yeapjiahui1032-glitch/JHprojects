@@ -18,7 +18,7 @@ with st.form("add_product_form"):
     name = st.text_input("Name")
     quantity = st.number_input("Quantity",min_value=0, step=1)
     min_stock = st.number_input("Minimum Stock",min_value=0, step=1)
-    category = st.text_input("Category")
+    category = st.selectbox("Category", ["Wood", "Metal", "Plastic"])
     location = st.text_input("Location")
     submitted = st.form_submit_button("Add Product")
 
