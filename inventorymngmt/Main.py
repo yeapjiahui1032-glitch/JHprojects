@@ -61,7 +61,7 @@ with col1:
          result = reduce_product_quantity(reduce_id, reduce_quantity)
          if result:
             st.success("Quantity reduced successfully!")
-        else:
+         else:
             st.error("Failed! Check the SKU or quantity entered.")
 with col2:
     with st.form("increase_quantity_form"):
