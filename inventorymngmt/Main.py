@@ -53,7 +53,7 @@ st.subheader("Update Product Quantity")
 col1, col2 = st.columns(2)
 with col1:
     with st.form("reduce_quantity_form"):
-        reduce_id = st.number_input("Product SKU to Reduce", step=1)
+        reduce_id = st.text_input("Product SKU to Reduce", step=1)
         reduce_quantity = st.number_input("Quantity to Reduce", min_value=0, step=1)
         reduce_submitted = st.form_submit_button("Reduce Quantity")
 
@@ -63,7 +63,7 @@ with col1:
             st.success("Product quantity updated successfully!")
 with col2:
     with st.form("increase_quantity_form"):
-        increase_id = st.number_input("Product SKU to Increase", step=1)
+        increase_id = st.text_input("Product SKU to Increase", step=1)
         increase_quantity = st.number_input("Quantity to Increase", min_value=0, step=1)
         increase_submitted = st.form_submit_button("Increase Quantity")
 
@@ -72,7 +72,7 @@ with col2:
             increase_product_quantity(increase_id, increase_quantity)
             st.success("Product quantity updated successfully!")
 st.subheader("Delete Product")
-delete_id = st.number_input("Product SKU to Delete", step=1)
+delete_id = st.text_input("Product SKU to Delete", step=1)
 if st.button("Delete Product"):
     st.info(f"Deleting product...")
     delete_product(delete_id)
