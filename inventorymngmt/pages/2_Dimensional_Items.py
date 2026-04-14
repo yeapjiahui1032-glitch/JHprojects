@@ -61,8 +61,6 @@ data =[
     for p in products
 ]
 st.dataframe(data, use_container_width=True)
-
-st.dataframe(data, use_container_width=True)
 st.subheader("Update Product Quantity")
 col1, col2 = st.columns(2)
 with col1:
