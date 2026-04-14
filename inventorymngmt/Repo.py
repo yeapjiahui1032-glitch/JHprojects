@@ -47,9 +47,9 @@ def create_table():
     conn.commit()
 
 def get_allproducts():
-    conn, cur = get_cursor()
-    cur.execute('SELECT * FROM products')
-    all_products = cur.fetchall()
+    conn = get_db_connection()
+    response = conn.table("products").select("*").execute()
+    all_products = response.data
     products = []
     for row in all_products:
         product = Product(
