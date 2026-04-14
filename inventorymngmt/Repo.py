@@ -1,24 +1,30 @@
 import os
-import sqlite3
+from urllib import response
+from supabase import create_client
 from Model import Product
 import streamlit as st
 import uuid
 import random
 import string
 
+SUPABASE_URL = st.secrets["supabase"]["url"]
+SUPABASE_KEY = st.secrets["supabase"]["key"]
+
 def generate_sku(length=8):
     """Generate a random SKU consisting of uppercase letters and digits."""
     characters = string.ascii_uppercase + string.digits
     return ''.join(random.choice(characters) for _ in range(length))
 
-DB_PATH = os.path.join(os.path.dirname(__file__), 'products.db')
 @st.cache_resource
 def get_db_connection():
-    conn = sqlite3.connect(DB_PATH, check_same_thread=False) 
-    return conn
+    url = st.secrets["supabase"]["url"]
+    key = st.secrets["supabase"]["key"]
+    return create_client(url, key)
 
 def get_cursor():
     conn = get_db_connection()
+    response = conn.table("products").select("*").execute()
+    products = response.data
     return conn,conn.cursor()
 
 def create_table():
