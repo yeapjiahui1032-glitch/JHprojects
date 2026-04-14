@@ -100,7 +100,7 @@ def reduce_product_quantity(sku: str, quantity: int):
         print("No such product!")
         return False          # ← explicit False
     else:
-        new_product_quantity = stock[3] - quantity
+        new_product_quantity = stock[5] - quantity
         if new_product_quantity < 0:
             print('Not enough products in stock!')
             return False      # ← explicit False
@@ -124,7 +124,7 @@ def increase_product_quantity(sku: str, quantity: int):
         print("Quantity to increase must be positive!")
         return False
     else:
-        new_stock_quantity = stock[3] + quantity
+        new_stock_quantity = stock[5] + quantity
         with conn:
             cur.execute(
                 "UPDATE products SET quantity=:quantity WHERE sku=:sku",
@@ -132,7 +132,20 @@ def increase_product_quantity(sku: str, quantity: int):
             )
             conn.commit()
         return True
-
+def update_dimension(sku:str,length: float, width :float):
+    conn, cur = get_cursor()
+    cur.execute("SELECT * FROM products WHERE sku=:sku",{'sku':sku})
+    stock = cur.fetchone
+    if not stock:
+        print("No such product")
+    else:
+        with conn:
+            cur.execute(
+                "UPDATE products SET length=:length, width+:width WHERE sku=:sku"
+                {'sku':sku, 'length': length, 'width':width}
+            )    
+            conn.commit()
+            return True
 
 def delete_product(sku: str):
     conn, cur = get_cursor()
