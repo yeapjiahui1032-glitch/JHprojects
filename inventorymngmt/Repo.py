@@ -28,7 +28,8 @@ def get_allproducts():
     products = []
     for row in all_products:
         product = Product(
-            id=row["id"],           
+            id=row["id"], 
+            name=row["name"],          
             sku=row["sku"],
             length=row["length"],
             width=row["width"],
