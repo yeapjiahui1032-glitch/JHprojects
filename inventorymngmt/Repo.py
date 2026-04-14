@@ -52,7 +52,7 @@ def add_product(product):
     if results:
         print("Product with this SKU already exists.")
         return False
-    conn.table("products").insert((
+    conn.table("products").insert({
                 "name": product.name,
                 "sku": product.sku,
                 "length": product.length,
@@ -63,7 +63,7 @@ def add_product(product):
                 "location": product.location,
                 "created_at": product.created_at,
                 "updated_at": product.updated_at
-            )).execute()
+            }).execute()
     return True
 
 def reduce_product_quantity(sku: str, quantity: int):
