@@ -132,47 +132,46 @@ def increase_product_quantity(sku: str, quantity: int):
             )
             conn.commit()
         return True
-def reduce_dimension(sku:str,length: float):
+    
+def reduce_dimension(sku: str, length: float, width: float):
     conn, cur = get_cursor()
     cur.execute("SELECT * FROM products WHERE sku=:sku", {'sku': sku})
     stock = cur.fetchone()
     if not stock:
         print("No such product!")
-        return False          # ← explicit False
+        return False
     else:
-        new_product_dimension = stock[3] - length
-        if new_product_dimension < 0:
-            print('Quantity to decrease must be positive!')
-            return False      # ← explicit False
+        new_length = stock[3] - length
+        new_width = stock[4] - width
+        if new_length < 0 or new_width < 0:
+            print('Dimension cannot go below zero!')
+            return False
         else:
             with conn:
                 cur.execute(
-                    "UPDATE products SET quantity=:quantity WHERE sku=:sku",
-                    {'sku': sku, 'quantity': new_product_dimension}
+                    "UPDATE products SET length=:length, width=:width WHERE sku=:sku",
+                    {'sku': sku, 'length': new_length, 'width': new_width}  # ← correct columns
                 )
                 conn.commit()
-            return True   
-        
-def increase_dimension(sku:str,length: float):
+            return True
+
+def increase_dimension(sku: str, length: float, width: float):
     conn, cur = get_cursor()
     cur.execute("SELECT * FROM products WHERE sku=:sku", {'sku': sku})
     stock = cur.fetchone()
     if not stock:
         print("No such product!")
-        return False          # ← explicit False
+        return False
     else:
-        new_product_dimension = stock[3] + length
-        if new_product_dimension < 0:
-            print('Quantity to decrease must be positive!')
-            return False      # ← explicit False
-        else:
-            with conn:
-                cur.execute(
-                    "UPDATE products SET quantity=:quantity WHERE sku=:sku",
-                    {'sku': sku, 'quantity': new_product_dimension}
-                )
-                conn.commit()
-            return True  
+        new_length = stock[3] + length
+        new_width = stock[4] + width
+        with conn:
+            cur.execute(
+                "UPDATE products SET length=:length, width=:width WHERE sku=:sku",
+                {'sku': sku, 'length': new_length, 'width': new_width}  # ← correct columns
+            )
+            conn.commit()
+        return True
 
 
 
