@@ -79,12 +79,12 @@ def add_product(product):
             ''', (
                 product.name,
                 product.sku,
+                product.length,
+                product.width,
                 product.quantity,
                 product.min_stock,
                 product.category,
                 product.location,
-                product.length,
-                product.width,
                 product.created_at,
                 product.updated_at,
             ))
