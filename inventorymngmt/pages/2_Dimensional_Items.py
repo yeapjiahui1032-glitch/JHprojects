@@ -104,7 +104,6 @@ with col3:
     else:
                  st.error("Failed! Check the SKU or quantity entered.")
 
-col3, col4 = st.columns
 with col4:
     with st.form("reduce length"):
         d_increase_dimension_id = st.text_input("Product SKU to Increase")
