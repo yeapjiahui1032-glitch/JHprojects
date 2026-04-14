@@ -7,8 +7,8 @@ import uuid
 import random
 import string
 
-SUPABASE_URL = st.secrets["supabase"]["url"]
-SUPABASE_KEY = st.secrets["supabase"]["key"]
+SUPABASE_URL = st.secrets["SUPABASE_URL"]
+SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
 
 def generate_sku(length=8):
     """Generate a random SKU consisting of uppercase letters and digits."""
