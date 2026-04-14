@@ -82,13 +82,15 @@ with col2:
 
 
 st.subheader("Delete Product")
-delete_id = st.text_input("Product SKU to Delete")
-if st.button("Delete Product"):
-    st.info(f"Deleting product...")
-    delete_product(delete_id)
-    st.success("Product deleted successfully!")
-else:
-        st.error("Failed! Check the SKU entered.")
+with st.form("Delete Product"):
+    delete_id = st.text_input("Product SKU to Delete")
+    delete_submitted = st.form_submit_button("Delete Product")
+    if delete_submitted:
+        result = delete_product(delete_id)
+        if result:
+            st.success("Product deleted sucessfully")
+        else:
+            st.error("Failed! Check the SKU")    
 
 if __name__ == "__main__":
     st.write("Welcome to the Inventory Management System! Use the sidebar to manage your inventory.")
