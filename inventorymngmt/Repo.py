@@ -28,10 +28,10 @@ def create_table():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
             sku TEXT NOT NULL UNIQUE,
-            quantity INTEGER NOT NULL,
-            min_stock INTEGER NOT NULL,
             length REAL,
-            width REAL,    
+            width REAL,     
+            quantity INTEGER NOT NULL,
+            min_stock INTEGER NOT NULL,  
             category TEXT NOT NULL,
             location TEXT NOT NULL,
             created_at TEXT NOT NULL,
@@ -74,7 +74,7 @@ def add_product(product):
     else:
         with conn:
             cur.execute('''
-                INSERT INTO products (name, sku, quantity, min_stock, category, location, length, width, created_at, updated_at)
+                INSERT INTO products (name, sku,length, width, quantity, min_stock, category, location, created_at, updated_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', (
                 product.name,
