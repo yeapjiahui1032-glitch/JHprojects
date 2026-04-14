@@ -105,7 +105,7 @@ with col1:
                  st.error("Failed! Check the SKU or quantity entered.")
 
 with col2:
-    with st.form("reduce length"):
+    with st.form("increase length"):
         d_increase_dimension_id = st.text_input("Product SKU to Increase")
         d_increase_dimension_quantity = st.number_input("Quantity to Increase", min_value=0, step=0.1)
         d_increase_dimension_sumbmitted = st.form_submit_button("Increase Length")
