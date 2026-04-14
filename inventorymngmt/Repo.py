@@ -179,3 +179,5 @@ def delete_product(sku: str):
     conn, cur = get_cursor()
     with conn:
         cur.execute("DELETE from products WHERE sku=:sku", {'sku': sku})
+        conn.commit()
+        return True

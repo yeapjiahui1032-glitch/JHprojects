@@ -2,7 +2,6 @@ import streamlit as st
 from Repo import create_table
 from Model import Product
 from Repo import get_allproducts, add_product, reduce_product_quantity, increase_product_quantity, delete_product, reduce_dimension, increase_dimension
-import streamlit as st
 import sys, os
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
