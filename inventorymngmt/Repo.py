@@ -1,6 +1,7 @@
 import os
 from urllib import response
 from supabase import create_client
+from sympy import product
 from Model import Product
 import streamlit as st
 import uuid
@@ -69,20 +70,15 @@ def get_allproducts():
     return products
 
 def add_product(product):
-    conn, cur = get_cursor()
+    conn = get_db_connection()
     if not product.sku:
         product.sku = generate_sku()
-    cur.execute("SELECT * FROM products WHERE sku = ?", (product.sku,))
-    results = cur.fetchone()
+    response = conn.table("products").select("*").eq("sku", product.sku).execute()
+    results = response.data
     if results:
         print("Product with this SKU already exists.")
         return False
-    else:
-        with conn:
-            cur.execute('''
-                INSERT INTO products (name, sku,length, width, quantity, min_stock, category, location, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (
+    conn.table("products").insert((
                 product.name,
                 product.sku,
                 product.length,
@@ -93,15 +89,13 @@ def add_product(product):
                 product.location,
                 product.created_at,
                 product.updated_at,
-            ))
-            conn.commit()
-        print("Product added successfully.")
-        return True
+            )).execute()
+    return True
 
 def reduce_product_quantity(sku: str, quantity: int):
-    conn, cur = get_cursor()
-    cur.execute("SELECT * FROM products WHERE sku=:sku", {'sku': sku})
-    stock = cur.fetchone()
+    conn = get_db_connection()
+    response = conn.table("products").select("*").eq("sku", sku).execute()
+    stock = response.data
     if not stock:
         print("No such product!")
         return False          # ← explicit False
