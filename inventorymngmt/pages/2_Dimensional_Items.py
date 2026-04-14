@@ -1,7 +1,7 @@
 import streamlit as st
 from Repo import create_table
 from Model import Product
-from Repo import get_allproducts, add_product, reduce_product_quantity, increase_product_quantity, delete_product
+from Repo import get_allproducts, add_product, reduce_product_quantity, increase_product_quantity, delete_product, reduce_dimension, increase_dimension
 import streamlit as st
 import sys, os
 
@@ -67,23 +67,23 @@ st.subheader("Update Product Quantity")
 col1, col2 = st.columns(2)
 with col1:
     with st.form("reduce_quantity_form"):
-        d_reduce_id = st.text_input("Product SKU to Reduce")
-        d_reduce_quantity = st.number_input("Quantity to Reduce", min_value=0, step=1)
-        d_reduce_submitted = st.form_submit_button("Reduce Quantity")
-        if d_reduce_submitted:
-            result = reduce_product_quantity(d_reduce_id, d_reduce_quantity)
-            if result is True:
-                st.success("Quantity reduced successfully!")
-            else:
-                st.error("Failed! Check the SKU or quantity entered.")
+            d_reduce_id = st.text_input("Product SKU to Reduce")
+            d_reduce_quantity = st.number_input("Quantity to Reduce", min_value=0, step=1)
+            d_reduce_submitted = st.form_submit_button("Reduce Quantity")
+            if d_reduce_submitted:
+                result = reduce_product_quantity(d_reduce_id, d_reduce_quantity)
+                if result is True:
+                    st.success("Quantity reduced successfully!")
+                else:
+                    st.error("Failed! Check the SKU or quantity entered.")
 with col2:
     with st.form("increase_quantity_form"):
-        d_increase_id = st.text_input("Product SKU to Increase")
-        d_increase_quantity = st.number_input("Quantity to Increase", min_value=0, step=1)
-        d_increase_submitted = st.form_submit_button("Increase Quantity")
+            d_increase_id = st.text_input("Product SKU to Increase")
+            d_increase_quantity = st.number_input("Quantity to Increase", min_value=0, step=1)
+            d_increase_submitted = st.form_submit_button("Increase Quantity")
 
-        if d_increase_submitted:
-            result = d_increase_quantity(d_increase_id, d_increase_quantity)
+            if d_increase_submitted:
+                result = increase_product_quantity(d_increase_id, d_increase_quantity)
             if result:
                 st.success("Quantity increased successfully!")
             else:
@@ -97,12 +97,12 @@ with col1:
         d_reduce_dimension_quantity = st.number_input("Quantity to Reduce", min_value=0, step=0.1)
         d_reduce_dimension_sumbmitted = st.form_submit_button("Reduce Length")
 
-    if d_increase_submitted:
-            result = d_reduce_dimension_quantity(d_reduce_dimension_id , d_reduce_dimension_quantity)
-            if result:
-                st.success("Quantity reduced successfully!")
-            else:
-                 st.error("Failed! Check the SKU or quantity entered.")
+        if d_reduce_dimension_sumbmitted:
+                result = reduce_dimension(d_reduce_dimension_id , d_reduce_dimension_quantity)
+                if result:
+                    st.success("Quantity reduced successfully!")
+                else:
+                    st.error("Failed! Check the SKU or quantity entered.")
 
 with col2:
     with st.form("increase length"):
@@ -110,8 +110,8 @@ with col2:
         d_increase_dimension_quantity = st.number_input("Quantity to Increase", min_value=0, step=0.1)
         d_increase_dimension_sumbmitted = st.form_submit_button("Increase Length")
 
-    if d_increase_submitted:
-            result = d_reduce_dimension_quantity(d_reduce_dimension_id , d_reduce_dimension_quantity)
+        if d_increase_dimension_sumbmitted:
+            result = increase_dimension(d_increase_dimension_id , d_increase_dimension_quantity)
             if result:
                 st.success("Quantity increased successfully!")
             else:
