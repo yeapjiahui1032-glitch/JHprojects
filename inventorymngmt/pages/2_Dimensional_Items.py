@@ -84,10 +84,10 @@ with col2:
 
             if d_increase_submitted:
                 result = increase_product_quantity(d_increase_id, d_increase_quantity)
-            if result:
-                st.success("Quantity increased successfully!")
-            else:
-                 st.error("Failed! Check the SKU or quantity entered.")
+                if result is True:
+                    st.success("Quantity increased successfully!")
+                else:
+                    st.error("Failed! Check the SKU or quantity entered.")
 
 st.subheader("Update Product Dimensions")
 col1, col2 = st.columns(2)
