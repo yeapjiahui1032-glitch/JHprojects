@@ -1,12 +1,9 @@
 import os
-from urllib import response
-from supabase import create_client
-from sympy import product
-from Model import Product
-import streamlit as st
-import uuid
 import random
 import string
+import streamlit as st
+from supabase import create_client
+from Model import Product
 
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
@@ -22,30 +19,7 @@ def get_db_connection():
     key = st.secrets["SUPABASE_KEY"]
     return create_client(url, key)
 
-def get_cursor():
-    conn = get_db_connection()
-    response = conn.table("products").select("*").execute()
-    products = response.data
-    return conn
 
-def create_table():
-    conn, cur = get_cursor()
-    cur.execute('''
-        CREATE TABLE IF NOT EXISTS products (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            sku TEXT NOT NULL UNIQUE,
-            length REAL,
-            width REAL,     
-            quantity INTEGER NOT NULL,
-            min_stock INTEGER NOT NULL,  
-            category TEXT NOT NULL,
-            location TEXT NOT NULL,
-            created_at TEXT NOT NULL,
-            updated_at TEXT NOT NULL
-        )
-    ''')
-    conn.commit()
 
 def get_allproducts():
     conn = get_db_connection()

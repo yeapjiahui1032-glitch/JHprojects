@@ -1,6 +1,5 @@
 
 import streamlit as st
-from Repo import create_table
 from Model import Product
 from Repo import get_allproducts, add_product, reduce_product_quantity, increase_product_quantity, delete_product
 
