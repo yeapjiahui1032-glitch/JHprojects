@@ -132,20 +132,49 @@ def increase_product_quantity(sku: str, quantity: int):
             )
             conn.commit()
         return True
-def update_dimension(sku:str,length: float, width :float):
+def reduce_dimension(sku:str,length: float):
     conn, cur = get_cursor()
-    cur.execute("SELECT * FROM products WHERE sku=:sku",{'sku':sku})
-    stock = cur.fetchone
+    cur.execute("SELECT * FROM products WHERE sku=:sku", {'sku': sku})
+    stock = cur.fetchone()
     if not stock:
-        print("No such product")
+        print("No such product!")
+        return False          # ← explicit False
     else:
-        with conn:
-            cur.execute(
-                "UPDATE products SET length=:length, width+:width WHERE sku=:sku",
-                {'sku':sku, 'length': length, 'width':width}
-            )    
-            conn.commit()
-            return True
+        new_product_dimension = stock[3] - length
+        if new_product_dimension < 0:
+            print('Quantity to decrease must be positive!')
+            return False      # ← explicit False
+        else:
+            with conn:
+                cur.execute(
+                    "UPDATE products SET quantity=:quantity WHERE sku=:sku",
+                    {'sku': sku, 'quantity': new_product_dimension}
+                )
+                conn.commit()
+            return True   
+        
+def increase_dimension(sku:str,length: float):
+    conn, cur = get_cursor()
+    cur.execute("SELECT * FROM products WHERE sku=:sku", {'sku': sku})
+    stock = cur.fetchone()
+    if not stock:
+        print("No such product!")
+        return False          # ← explicit False
+    else:
+        new_product_dimension = stock[3] + length
+        if new_product_dimension < 0:
+            print('Quantity to decrease must be positive!')
+            return False      # ← explicit False
+        else:
+            with conn:
+                cur.execute(
+                    "UPDATE products SET quantity=:quantity WHERE sku=:sku",
+                    {'sku': sku, 'quantity': new_product_dimension}
+                )
+                conn.commit()
+            return True  
+
+
 
 def delete_product(sku: str):
     conn, cur = get_cursor()
