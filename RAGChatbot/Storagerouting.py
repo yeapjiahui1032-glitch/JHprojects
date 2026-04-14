@@ -27,8 +27,8 @@ def load_llm():
 @st.cache_resource
 def load_splitter():
     return RecursiveCharacterTextSplitter(
-        chunk_size=500,
-        chunk_overlap=50,
+        chunk_size=800,
+        chunk_overlap=100,
         separators=["\n## ", "\n### ", "\n\n", "\n", " "]
     )
 
@@ -70,11 +70,12 @@ def fetch_vault_from_github():
 # ================================================================
 
 def find_relevant_notes(question, notes, top_n=5):
-    """Cheap keyword match on filenames — no embedding cost"""
     keywords = [w.lower() for w in question.split() if len(w) > 3]
-    scored   = []
+    scored = []
     for note in notes:
-        score = sum(1 for kw in keywords if kw in note["name"].lower() or kw in note["path"].lower())
+        # Score on filename AND first 500 chars of content
+        search_text = note["name"].lower() + " " + note["content"][:500].lower()
+        score = sum(1 for kw in keywords if kw in search_text)
         scored.append((score, note))
     scored.sort(key=lambda x: x[0], reverse=True)
     top = [n for s, n in scored if s > 0][:top_n]
@@ -88,7 +89,7 @@ def retrieve_chunks(matched_notes, question, embeddings, splitter):
     ]
     chunks  = splitter.split_documents(docs)
     store = FAISS.from_documents(chunks, embeddings)
-    results = store.as_retriever(search_kwargs={"k": 4}).invoke(question)
+    results = store.as_retriever(search_kwargs={"k": 8}).invoke(question)
     return results
 
 # ================================================================
@@ -167,12 +168,14 @@ if prompt := st.chat_input("Ask anything about your notes..."):
 
             messages = [
                 SystemMessage(content=(
-                    "You are a helpful assistant that answers questions using "
-                    "the user's personal Obsidian notes. "
-                    "Answer ONLY from the notes provided. "
-                    "Mention the note name where relevant. "
-                    "If the notes don't cover the question, say so clearly — "
-                    "do not make up information."
+                    "You are a precise assistant that answers questions ONLY using the notes provided below. "
+                    "Rules you must follow:\n"
+                    "1. Base your answer STRICTLY on the provided notes. Do not use outside knowledge.\n"
+                    "2. If the notes do not contain enough information to answer, say exactly: "
+                    "'I could not find this in your notes.' Do not guess or fill in gaps.\n"
+                    "3. Always cite the note name (e.g. 'According to RAG-Chatbot.md...') for every claim.\n"
+                    "4. Be concise and direct. Do not add commentary not found in the notes.\n"
+                    "5. If the question is ambiguous, answer what the notes most closely support.\n"
                 )),
                 HumanMessage(content=f"My notes:\n\n{context}\n\nQuestion: {prompt}")
             ]
