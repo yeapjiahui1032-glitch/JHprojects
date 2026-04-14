@@ -135,38 +135,25 @@ def reduce_dimension(sku: str, length: float, width: float):
         if new_length < 0 or new_width < 0:
             print('Dimension cannot go below zero!')
             return False
-        else:
-            with conn:
-                cur.execute(
-                    "UPDATE products SET length=:length, width=:width WHERE sku=:sku",
-                    {'sku': sku, 'length': new_length, 'width': new_width}  # ← correct columns
-                )
-                conn.commit()
-            return True
+        conn.table("products").update({"length": new_length, "width": new_width}).eq("sku", sku).execute()
+        return True
 
 def increase_dimension(sku: str, length: float, width: float):
-    conn, cur = get_cursor()
-    cur.execute("SELECT * FROM products WHERE sku=:sku", {'sku': sku})
-    stock = cur.fetchone()
+    conn = get_db_connection()
+    response = conn.table("products").select("*").eq("sku", sku).execute()
+    stock = response.data
     if not stock:
         print("No such product!")
         return False
     else:
         new_length = stock[3] + length
         new_width = stock[4] + width
-        with conn:
-            cur.execute(
-                "UPDATE products SET length=:length, width=:width WHERE sku=:sku",
-                {'sku': sku, 'length': new_length, 'width': new_width}  # ← correct columns
-            )
-            conn.commit()
+        conn.table("products").update({"length": new_length, "width": new_width}).eq("sku", sku).execute()
         return True
 
 
 
 def delete_product(sku: str):
-    conn, cur = get_cursor()
-    with conn:
-        cur.execute("DELETE from products WHERE sku=:sku", {'sku': sku})
-        conn.commit()
-        return True
+    conn = get_db_connection()
+    conn.table("products").delete().eq("sku", sku).execute()
+    return True
