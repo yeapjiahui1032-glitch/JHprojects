@@ -40,6 +40,54 @@ def smart_search(query: str, vectorstore, k=5):
     return vectorstore.similarity_search(query, k=k)
 
 
+def rewrite_query(query: str) -> list[str]:
+    """Expand a query into multiple semantic variations."""
+    rewrites = [query]
+    q_lower = query.lower()
+
+    phrase_map = {
+        "who am i": ["about me", "my profile", "personal identity", "my name"],
+        "my name": ["who am i", "about me", "profile"],
+        "my skills": ["skills", "expertise", "tech stack", "what am i good at"],
+        "my projects": ["projects", "portfolio", "things i built", "my work"],
+    }
+
+    name_map = {
+        "jia hui": ["I am", "my name is", "about me", "profile"],
+    }
+
+    for phrase, aliases in phrase_map.items():
+        if phrase in q_lower:
+            rewrites.extend(aliases)
+
+    for name, aliases in name_map.items():
+        if name in q_lower:
+            rewrites.extend(aliases)
+
+    # Keep order stable while removing duplicates.
+    return list(dict.fromkeys(rewrites))
+
+
+def smart_retrieve(query, vectorstore, k=5):
+    queries = rewrite_query(query)
+    seen = set()
+    results = []
+
+    for rewritten_query in queries:
+        docs = smart_search(rewritten_query, vectorstore, k=k)
+        for doc in docs:
+            source = doc.metadata.get("source", "")
+            doc_key = (source, doc.page_content)
+            if doc_key in seen:
+                continue
+            seen.add(doc_key)
+            results.append(doc)
+            if len(results) >= k:
+                return results
+
+    return results[:k]
+
+
 def find_relevant_notes(question, notes, top_n=5):
     keywords = [word.lower() for word in question.split() if len(word) > 3]
     scored = []
@@ -74,4 +122,4 @@ def retrieve_chunks(matched_notes, question, embeddings, splitter, k=8):
     ]
     chunks = splitter.split_documents(documents)
     store = FAISS.from_documents(chunks, embeddings)
-    return smart_search(question, store, k=k)
+    return smart_retrieve(question, store, k=k)
