@@ -12,6 +12,17 @@ TAG_KEYWORD_MAP = {
 # Lowered threshold to allow more candidate chunks through.
 MIN_RELEVANCE_SCORE = 0.15
 
+PRIORITY_SOURCE_RULES = [
+    {
+        "keywords": ["projects", "project"],
+        "source": "Jia Hui's network/Perplexity/Master-Project-List.md",
+    },
+    {
+        "keywords": ["who am i"],
+        "source": "Jia Hui's network/Claude/About J.md",
+    },
+]
+
 
 def infer_tags(note):
     haystack = f"{note['path']} {note['name']} {note['content'][:1000]}".lower()
@@ -45,7 +56,54 @@ def search_with_debug_scores(query, vectorstore, k=5, filter_fn=None):
     ]
 
 
+def get_priority_sources(query: str):
+    q_lower = query.lower()
+    sources = []
+
+    for rule in PRIORITY_SOURCE_RULES:
+        if any(keyword in q_lower for keyword in rule["keywords"]):
+            sources.append(rule["source"])
+
+    # Keep order stable while removing duplicates.
+    return list(dict.fromkeys(sources))
+
+
+def priority_source_search(query: str, vectorstore, k=5):
+    sources = get_priority_sources(query)
+    if not sources:
+        return []
+
+    results = []
+    seen = set()
+
+    for source in sources:
+        def source_filter(metadata):
+            return metadata.get("source") == source
+
+        docs = search_with_debug_scores(
+            query=query,
+            vectorstore=vectorstore,
+            k=k,
+            filter_fn=source_filter,
+        )
+
+        for doc in docs:
+            doc_key = (doc.metadata.get("source", ""), doc.page_content)
+            if doc_key in seen:
+                continue
+            seen.add(doc_key)
+            results.append(doc)
+            if len(results) >= k:
+                return results
+
+    return results
+
+
 def smart_search(query: str, vectorstore, k=5):
+    priority_docs = priority_source_search(query=query, vectorstore=vectorstore, k=k)
+    if priority_docs:
+        return priority_docs
+
     q_lower = query.lower()
 
     for keyword, tags in TAG_KEYWORD_MAP.items():
