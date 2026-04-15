@@ -18,7 +18,7 @@ PRIORITY_SOURCE_RULES = [
         "source": "Master-Project-List.md",
     },
     {
-        "keywords": ["who am i"],
+        "keywords": [" i","Jia Hui", "my name", "who am i", "about me", "profile"],
         "source": "About J.md",
     },
 ]
