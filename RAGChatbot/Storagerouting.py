@@ -28,6 +28,21 @@ def build_note_tree_lines(notes):
     return lines
 
 
+def group_notes_by_folder(notes):
+    folders = {}
+    for note in notes:
+        path = note["path"]
+        if "/" in path:
+            folder, filename = path.rsplit("/", 1)
+        else:
+            folder, filename = "(root)", path
+        folders.setdefault(folder, []).append(filename)
+
+    for folder in folders:
+        folders[folder] = sorted(folders[folder])
+    return dict(sorted(folders.items(), key=lambda item: item[0].lower()))
+
+
 def render_sidebar():
     with st.sidebar:
         st.title("Obsidian RAG")
@@ -48,8 +63,15 @@ def render_sidebar():
 
         st.success(f"{len(notes)} notes loaded")
         with st.expander("View loaded notes (folder structure)"):
-            for line in build_note_tree_lines(notes):
-                st.text(line)
+            tree_lines = build_note_tree_lines(notes)
+            st.code("\n".join(tree_lines), language="text")
+
+        with st.expander("Browse notes by folder"):
+            folders = group_notes_by_folder(notes)
+            selected_folder = st.selectbox("Folder", list(folders.keys()))
+            st.caption(f"{len(folders[selected_folder])} files")
+            for filename in folders[selected_folder]:
+                st.text(f"- {filename}")
 
         st.markdown("---")
         st.caption("Notes refresh every 5 minutes automatically.")
